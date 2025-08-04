@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Create Ticket - IT Support{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-plus-circle text-primary"></i> Create New Support Ticket
+                </h4>
+                <p class="text-muted mb-0">Submit a new IT support request</p>
+            </div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.site.label(class="form-label fw-bold") }}
+                            {{ form.site(class="form-select" + (" is-invalid" if form.site.errors else "")) }}
+                            {% if form.site.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.site.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Select the site where the issue is occurring</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.sender.label(class="form-label fw-bold") }}
+                            {{ form.sender(class="form-control" + (" is-invalid" if form.sender.errors else ""), placeholder="Your name or contact info (optional)") }}
+                            {% if form.sender.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.sender.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Optional: Help us contact you about this ticket</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        {{ form.description.label(class="form-label fw-bold") }}
+                        {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), 
+                                          rows="6", 
+                                          placeholder="Please describe the issue in detail. Include:\n• What happened?\n• When did it start?\n• What were you trying to do?\n• Any error messages you saw\n• Steps you've already tried") }}
+                        {% if form.description.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.description.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <small id="charCount" class="text-muted">0 / 1000 characters</small>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>What happens next?</strong><br>
+                        <small>
+                            • A unique ticket number will be generated<br>
+                            • You'll receive confirmation via Telegram and email<br>
+                            • Our IT team will be notified immediately<br>
+                            • You can track the status of your ticket anytime
+                        </small>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Dashboard
+                        </a>
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Tips -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightbulb text-warning"></i> Tips for Better Support
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Be Specific</h6>
+                        <ul class="small text-muted">
+                            <li>Include exact error messages</li>
+                            <li>Mention affected systems/software</li>
+                            <li>Provide timestamps when possible</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Include Context</h6>
+                        <ul class="small text-muted">
+                            <li>What were you trying to accomplish?</li>
+                            <li>When did the problem start?</li>
+                            <li>Has this worked before?</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Character counter for description field
+document.addEventListener('DOMContentLoaded', function() {
+    const descriptionField = document.getElementById('description');
+    const charCount = document.getElementById('charCount');
+    
+    if (descriptionField && charCount) {
+        function updateCharCount() {
+            const length = descriptionField.value.length;
+            charCount.textContent = `${length} / 1000 characters`;
+            
+            if (length > 900) {
+                charCount.className = 'text-warning';
+            } else if (length > 950) {
+                charCount.className = 'text-danger';
+            } else {
+                charCount.className = 'text-muted';
+            }
+        }
+        
+        descriptionField.addEventListener('input', updateCharCount);
+        updateCharCount(); // Initial count
+    }
+});
+</script>
+{% endblock %}

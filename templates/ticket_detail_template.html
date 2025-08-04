@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+</style>
+{% endblock %}
+
+{% block title %}{{ ticket.ticket_number }} - IT Support{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <!-- Ticket Details -->
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h4 class="mb-1">
+                            <i class="bi bi-ticket-perforated text-primary"></i>
+                            Ticket {{ ticket.ticket_number }}
+                        </h4>
+                        {% set status_class = {
+                            'Open': 'danger',
+                            'In Progress': 'warning',
+                            'Resolved': 'success',
+                            'Closed': 'secondary'
+                        } %}
+                        <span class="badge bg-{{ status_class.get(ticket.status, 'primary') }} fs-6">
+                            {{ ticket.status }}
+                        </span>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted">
+                            Created: {{ ticket.created_at.strftime('%B %d, %Y at %H:%M') if ticket.created_at else 'N/A' }}
+                        </small>
+                        {% if ticket.updated_at and ticket.updated_at != ticket.created_at %}
+                        <br>
+                        <small class="text-muted">
+                            Updated: {{ ticket.updated_at.strftime('%B %d, %Y at %H:%M') }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong class="text-muted">Site:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        <span class="badge bg-info fs-6">{{ ticket.site }}</span>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong class="text-muted">Submitted by:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        {{ ticket.sender or 'Anonymous' }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong class="text-muted">Description:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        <div class="border rounded p-3 bg-light">
+                            {{ ticket.description | replace('\n', '<br>') | safe }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightning"></i> Quick Actions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    {% if ticket.status == 'Open' %}
+                    <div class="col-md-3">
+                        <button class="btn btn-warning w-100" 
+                                onclick="updateTicketStatus('In Progress')">
+                            <i class="bi bi-play-circle"></i><br>
+                            <small>Start Working</small>
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    {% if ticket.status in ['Open', 'In Progress'] %}
+                    <div class="col-md-3">
+                        <button class="btn btn-success w-100" 
+                                onclick="updateTicketStatus('Resolved')">
+                            <i class="bi bi-check-circle"></i><br>
+                            <small>Mark Resolved</small>
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    {% if ticket.status == 'Resolved' %}
+                    <div class="col-md-3">
+                        <button class="btn btn-secondary w-100" 
+                                onclick="updateTicketStatus('Closed')">
+                            <i class="bi bi-x-circle"></i><br>
+                            <small>Close Ticket</small>
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-warning w-100" 
+                                onclick="updateTicketStatus('Open')">
+                            <i class="bi bi-arrow-counterclockwise"></i><br>
+                            <small>Reopen</small>
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    {% if ticket.status == 'Closed' %}
+                    <div class="col-md-3">
+                        <button class="btn btn-warning w-100" 
+                                onclick="updateTicketStatus('Open')">
+                            <i class="bi bi-arrow-counterclockwise"></i><br>
+                            <small>Reopen</small>
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary w-100" onclick="printTicket()">
+                            <i class="bi bi-printer"></i><br>
+                            <small>Print</small>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Status Update Form -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-pencil-square"></i> Update Status
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('update_ticket', ticket_number=ticket.ticket_number) }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.status.label(class="form-label") }}
+                        {{ form.status(class="form-select") }}
+                    </div>
+                    
+                    {{ form.submit(class="btn btn-primary w-100") }}
+                </form>
+            </div>
+        </div>
+        
+        <!-- Ticket Information -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle"></i> Ticket Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td class="text-muted"><strong>ID:</strong></td>
+                        <td>{{ ticket.id }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted"><strong>Number:</strong></td>
+                        <td>{{ ticket.ticket_number }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted"><strong>Site:</strong></td>
+                        <td><span class="badge bg-info">{{ ticket.site }}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted"><strong>Status:</strong></td>
+                        <td>
+                            <span class="badge bg-{{ status_class.get(ticket.status, 'primary') }}">
+                                {{ ticket.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted"><strong>Created:</strong></td>
+                        <td>
+                            {% if ticket.created_at %}
+                                {{ ticket.created_at.strftime('%m/%d/%y %H:%M') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted"><strong>Updated:</strong></td>
+                        <td>
+                            {% if ticket.updated_at %}
+                                {{ ticket.updated_at.strftime('%m/%d/%y %H:%M') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-compass"></i> Navigation
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('tickets') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to All Tickets
+                    </a>
+                    <a href="{{ url_for('tickets', site=ticket.site) }}" class="btn btn-outline-info">
+                        <i class="bi bi-building"></i> {{ ticket.site }} Tickets
+                    </a>
+                    <a href="{{ url_for('create_ticket') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-plus-circle"></i> Create New Ticket
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateTicketStatus(newStatus) {
+    if (confirm(`Update ticket {{ ticket.ticket_number }} to ${newStatus}?`)) {
+        // Update the form and submit
+        document.getElementById('status').value = newStatus;
+        document.querySelector('form').submit();
+    }
+}
+
+function printTicket() {
+    window.print();
+}
+
+// Print styles
+window.addEventListener('beforeprint', function() {
+    document.body.classList.add('printing');
+});
+
+window.addEventListener('afterprint', function() {
+    document.body.classList.remove('printing');
+});
+</script>
+
+<style>
+@media print {
+    .btn, .card-header, nav, footer, .sidebar {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .col-lg-8 {
+        width: 100% !important;
+    }
+}
+    
