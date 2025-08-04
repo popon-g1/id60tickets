@@ -1,0 +1,7 @@
+Flask==2.3.3
+Flask-WTF==1.1.1
+WTForms==3.0.1
+psycopg2-binary==2.9.7
+python-telegram-bot==20.5
+python-dotenv==1.0.0
+gunicorn==21.2.0
